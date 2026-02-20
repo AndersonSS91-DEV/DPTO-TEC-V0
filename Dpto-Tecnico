@@ -1,0 +1,83 @@
+import streamlit as st
+import pandas as pd
+import numpy as np
+from datetime import datetime
+
+st.set_page_config(layout=wide)
+
+st.title(📊 Dashboard - MBF Produção)
+
+# Upload
+arquivo = st.file_uploader(Upload da Base, type=[csv, xlsx])
+
+if arquivo
+
+    # ==============================
+    # LEITURA DAS ABAS
+    # ==============================
+
+    df_op = pd.read_excel(arquivo, sheet_name=OP)
+    df_opr = pd.read_excel(arquivo, sheet_name=OPR)
+
+    # ==============================
+    # TRATAMENTO DATAS
+    # ==============================
+
+    df_op[Data Cadastro] = pd.to_datetime(df_op[Data Cadastro])
+    df_op[Data Término] = pd.to_datetime(df_op[Data Término])
+
+    df_op[Mes] = df_op[Data Cadastro].dt.strftime(%b%y)
+
+    # ==============================
+    # KPI 1 - OPs no mês atual
+    # ==============================
+
+    mes_atual = datetime.now().strftime(%b%y)
+    op_mes = df_op[df_op[Mes] == mes_atual].shape[0]
+
+    # ==============================
+    # KPI 2 - Tempo Médio (dias úteis)
+    # ==============================
+
+    df_op[Tempo_Liberacao] = np.busday_count(
+        df_op[Data Entrega].dt.date,
+        df_op[Data Término].dt.date
+    )
+
+    tempo_medio = df_op[Tempo_Liberacao].mean()
+
+    # ==============================
+    # LAYOUT
+    # ==============================
+
+    aba1, aba2 = st.tabs([📦 OP, 🔁 OPR])
+
+    with aba1
+
+        col1, col2, col3 = st.columns(3)
+
+        col1.metric(OP's no mês, op_mes)
+        col2.metric(Tempo médio liberação (d.u.), round(tempo_medio,1))
+        col3.metric(Demanda Atual, Em construção)
+
+        st.subheader(OPs por mês)
+        op_mes_group = df_op.groupby(Mes).size()
+        st.bar_chart(op_mes_group)
+
+        st.subheader(OPs por elaborador)
+        op_elaborador = df_op[Elaborador].value_counts()
+        st.bar_chart(op_elaborador)
+
+
+    with aba2
+
+        st.subheader(OPR por mês)
+        opr_mes = df_opr.groupby(
+            pd.to_datetime(df_opr[Data Cadastro]).dt.strftime(%b%y)
+        ).size()
+
+        st.bar_chart(opr_mes)
+
+        st.subheader(Motivos de Retrabalho)
+        motivos = df_opr[OP R Motivo].value_counts()
+        st.bar_chart(motivos)

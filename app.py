@@ -222,64 +222,66 @@ if arquivo:
 
     with col_right:
 
-       # =============================
-# GRÁFICO MENSAL (NOV/25 → MÊS ATUAL)
-# =============================
-if col_cadastro:
+        # =============================
+        # GRÁFICO MENSAL (NOV/25 → MÊS ATUAL)
+        # =============================
 
-    inicio_grafico = pd.Timestamp("2025-11-01")
-    fim_grafico = pd.Timestamp(hoje.year, hoje.month, 1) + pd.offsets.MonthEnd(0)
+        if col_cadastro:
 
-    df_grafico = df[
-        (df[col_cadastro] >= inicio_grafico) &
-        (df[col_cadastro] <= fim_grafico)
-    ].copy()
+            inicio_grafico = pd.Timestamp("2025-11-01")
+            fim_grafico = pd.Timestamp(hoje.year, hoje.month, 1) + pd.offsets.MonthEnd(0)
 
-    # Criar coluna mês formatada
-    df_grafico["Mes"] = df_grafico[col_cadastro].dt.strftime("%b/%y")
+            df_grafico = df[
+                (df[col_cadastro] >= inicio_grafico) &
+                (df[col_cadastro] <= fim_grafico)
+            ].copy()
 
-    mensal = df_grafico.groupby("Mes").size()
+            # Criar coluna mês formatada
+            df_grafico["Mes"] = df_grafico[col_cadastro].dt.strftime("%b/%y")
 
-    # Ordenar meses corretamente
-    ordem_meses = (
-        pd.date_range(start=inicio_grafico, end=fim_grafico, freq="MS")
-        .strftime("%b/%y")
-        .tolist()
-    )
+            mensal = df_grafico.groupby("Mes").size()
 
-    mensal = mensal.reindex(ordem_meses, fill_value=0)
+            # Ordenar meses corretamente
+            ordem_meses = (
+                pd.date_range(start=inicio_grafico, end=fim_grafico, freq="MS")
+                .strftime("%b/%y")
+                .tolist()
+            )
 
-    media = mensal.mean()
+            mensal = mensal.reindex(ordem_meses, fill_value=0)
 
-    fig = go.Figure()
+            media = mensal.mean()
 
-    fig.add_bar(
-        x=mensal.index,
-        y=mensal.values,
-        marker_color="#bcbcbc"
-    )
+            fig = go.Figure()
 
-    fig.add_hline(
-        y=media,
-        line_color="green",
-        annotation_text=f"Média ({round(media,0)})"
-    )
+            fig.add_bar(
+                x=mensal.index,
+                y=mensal.values,
+                marker_color="#bcbcbc"
+            )
 
-    fig.update_layout(
-        xaxis_title="",
-        yaxis_title="Quantidade de OP's",
-        margin=dict(l=10, r=10, t=10, b=10),
-        plot_bgcolor="white",
-        paper_bgcolor="white",
-        xaxis=dict(type="category")  # força eixo categórico
-    )
+            fig.add_hline(
+                y=media,
+                line_color="green",
+                annotation_text=f"Média ({round(media,0)})"
+            )
 
-    st.markdown('<div class="chart-container">', unsafe_allow_html=True)
-    st.plotly_chart(fig, use_container_width=True)
-    st.markdown('</div>', unsafe_allow_html=True)
+            fig.update_layout(
+                xaxis_title="",
+                yaxis_title="Quantidade de OP's",
+                margin=dict(l=10, r=10, t=10, b=10),
+                plot_bgcolor="white",
+                paper_bgcolor="white",
+                xaxis=dict(type="category")
+            )
+
+            st.markdown('<div class="chart-container">', unsafe_allow_html=True)
+            st.plotly_chart(fig, use_container_width=True)
+            st.markdown('</div>', unsafe_allow_html=True)
     
 else:
     st.info("Carregue a base Excel (.xlsx) para visualizar o dashboard.")
+
 
 
 

@@ -76,7 +76,7 @@ st.markdown("""
 
 st.markdown("""
 <div class="header-mbf">
-    <h2>Dashboard Operações - OPS</h2>
+    <h2>Dashboard - OP´s - Departamento Técnico MBF</h2>
 </div>
 """, unsafe_allow_html=True)
 
@@ -249,6 +249,7 @@ if arquivo:
 
 else:
     st.info("Carregue a base Excel (.xlsx) para visualizar o dashboard.")
+
 
 
 

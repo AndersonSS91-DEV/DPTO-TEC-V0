@@ -123,40 +123,69 @@ if arquivo:
         (df[col_cadastro] <= fim_grafico)
     ]
 
-    # ======================================================
-    # KPIs
-    # ======================================================
+# ======================================================
+# DIAS ÚTEIS (CORRETO: ENTREGA → TERMINO)
+# ======================================================
 
-    mes_atual = hoje.month
-    ano_atual = hoje.year
+def dias_uteis(entrega, termino):
+    if pd.isna(entrega) or pd.isna(termino):
+        return np.nan
+    if termino < entrega:
+        return np.nan  # evita valores negativos
+    return np.busday_count(entrega.date(), termino.date())
 
-    op_mes = df[
-        (df[col_cadastro].dt.month == mes_atual) &
-        (df[col_cadastro].dt.year == ano_atual)
+if col_entrega and col_termino:
+    df["Dias_Uteis"] = df.apply(
+        lambda row: dias_uteis(row[col_entrega], row[col_termino]),
+        axis=1
+    )
+else:
+    df["Dias_Uteis"] = np.nan
+
+# ======================================================
+# KPIs
+# ======================================================
+
+mes_atual = hoje.month
+ano_atual = hoje.year
+
+# OPs do mês vigente baseadas no INICIO
+op_mes = df[
+    (df[col_inicio].dt.month == mes_atual) &
+    (df[col_inicio].dt.year == ano_atual)
+]
+
+# Tempo médio apenas das válidas
+tempo_medio = df["Dias_Uteis"].dropna().mean()
+
+# Demanda (mantido como estava)
+demanda = df[
+    (df[col_inicio].isna()) |
+    (df[col_termino].isna())
+] if col_inicio and col_termino else pd.DataFrame()
+
+# ======================================================
+# CONTAGEM ELABORADORES (BASEADO EM INICIO)
+# ======================================================
+
+if col_elaborador and col_inicio:
+
+    df_mes = df[
+        (df[col_inicio].dt.month == mes_atual) &
+        (df[col_inicio].dt.year == ano_atual)
     ]
 
-    tempo_medio = df["Dias_Uteis"].mean()
+    bento_mes = df_mes[
+        df_mes[col_elaborador].str.upper().str.strip() == "BENTO"
+    ]
 
-    demanda = df[
-        (df[col_inicio].isna()) |
-        (df[col_termino].isna())
-    ] if col_inicio and col_termino else pd.DataFrame()
+    rodner_mes = df_mes[
+        df_mes[col_elaborador].str.upper().str.strip() == "RODNER"
+    ]
 
-    if col_elaborador:
-        bento_mes = df[
-            (df[col_elaborador] == "Bento") &
-            (df[col_cadastro].dt.month == mes_atual) &
-            (df[col_cadastro].dt.year == ano_atual)
-        ]
-
-        rodner_mes = df[
-            (df[col_elaborador] == "Rodner") &
-            (df[col_cadastro].dt.month == mes_atual) &
-            (df[col_cadastro].dt.year == ano_atual)
-        ]
-    else:
-        bento_mes = pd.DataFrame()
-        rodner_mes = pd.DataFrame()
+else:
+    bento_mes = pd.DataFrame()
+    rodner_mes = pd.DataFrame()
 
     # ======================================================
     # CARDS SUPERIORES (PADRÃO IGUAL AOS LATERAIS)
@@ -256,3 +285,4 @@ if arquivo:
 
 else:
     st.info("Carregue a base Excel (.xlsx) para visualizar o dashboard.")
+

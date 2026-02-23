@@ -1,5 +1,5 @@
 # ==========================================================
-# DASHBOARD OPS - MBF EXECUTIVO FINAL
+# DASHBOARD OPS - MBF EXECUTIVO (VERSÃO CORRIGIDA REAL)
 # ==========================================================
 
 import streamlit as st
@@ -10,31 +10,12 @@ from datetime import datetime
 
 st.set_page_config(layout="wide")
 
-# ==========================================================
-# CSS PADRÃO EXECUTIVO
-# ==========================================================
-
 st.markdown("""
 <style>
-
 .stApp { background-color: #eef2f5; }
+.block-container { padding-top: 1rem; padding-left: 2rem; padding-right: 2rem; }
 
-.block-container {
-    padding-top: 1rem;
-    padding-left: 2rem;
-    padding-right: 2rem;
-}
-
-/* Header */
-.header-mbf {
-    background-color: #dce6ea;
-    padding: 18px;
-    border-radius: 6px;
-    margin-bottom: 20px;
-}
-
-/* Card padrão */
-.card-padrao {
+.card {
     background-color: white;
     border-top: 35px solid #1f2430;
     padding: 15px;
@@ -42,217 +23,150 @@ st.markdown("""
     height: 120px;
 }
 
-/* Número grande */
 .big-number {
     font-size: 28px;
     font-weight: bold;
     margin-top: 10px;
 }
-
-/* Container gráfico */
-.chart-container {
-    background-color: white;
-    border-radius: 10px;
-    padding: 15px;
-    border-top: 45px solid #1f2430;
-}
-
 </style>
 """, unsafe_allow_html=True)
 
-# ==========================================================
-# HEADER
-# ==========================================================
-
-st.markdown("""
-<div class="header-mbf">
-    <h2>Dashboard Operações - OPS</h2>
-</div>
-""", unsafe_allow_html=True)
+st.title("Dashboard Operações - OPS")
 
 arquivo = st.file_uploader("Carregar base Excel (.xlsx)", type=["xlsx"])
 
 if arquivo:
 
-    # ======================================================
-    # LEITURA
-    # ======================================================
-
     df = pd.read_excel(arquivo, sheet_name=0)
     df.columns = df.columns.str.strip()
 
-    # Detectar colunas automaticamente
-    col_cadastro = next((c for c in df.columns if "cadastro" in c.lower()), None)
-    col_entrega = next((c for c in df.columns if "entrega" in c.lower()), None)
-    col_termino = next((c for c in df.columns if "termino" in c.lower() or "término" in c.lower()), None)
-    col_inicio = next((c for c in df.columns if "inicio" in c.lower()), None)
-    col_elaborador = next((c for c in df.columns if "elaborador" in c.lower()), None)
-
     # Converter datas
-    for c in [col_cadastro, col_entrega, col_termino, col_inicio]:
-        if c:
-            df[c] = pd.to_datetime(df[c], errors="coerce")
+    df["Inicio"] = pd.to_datetime(df["Inicio"], errors="coerce")
+    df["Termino"] = pd.to_datetime(df["Termino"], errors="coerce")
 
-    # ======================================================
-    # DIAS ÚTEIS
-    # ======================================================
-
-    def dias_uteis(inicio, fim):
-        if pd.isna(inicio) or pd.isna(fim):
-            return np.nan
-        return np.busday_count(inicio.date(), fim.date())
-
-    if col_entrega and col_termino:
-        df["Dias_Uteis"] = df.apply(
-            lambda row: dias_uteis(row[col_entrega], row[col_termino]),
-            axis=1
-        )
-    else:
-        df["Dias_Uteis"] = np.nan
-
-    # ======================================================
-    # JANELA DO GRÁFICO (NOV/2025 até mês atual)
-    # ======================================================
-
-    inicio_grafico = pd.Timestamp("2025-11-01")
     hoje = datetime.now()
-    fim_grafico = pd.Timestamp(hoje.year, hoje.month, 1) + pd.offsets.MonthEnd(1)
-
-    df_grafico = df[
-        (df[col_cadastro] >= inicio_grafico) &
-        (df[col_cadastro] <= fim_grafico)
-    ]
-
-    # ======================================================
-    # KPIs
-    # ======================================================
-
     mes_atual = hoje.month
     ano_atual = hoje.year
 
-    op_mes = df[
-        (df[col_cadastro].dt.month == mes_atual) &
-        (df[col_cadastro].dt.year == ano_atual)
-    ]
+    # ======================================================
+    # FILTRO OP VÁLIDAS
+    # ======================================================
 
-    tempo_medio = df["Dias_Uteis"].mean()
-
-    demanda = df[
-        (df[col_inicio].isna()) |
-        (df[col_termino].isna())
-    ] if col_inicio and col_termino else pd.DataFrame()
-
-    if col_elaborador:
-        bento_mes = df[
-            (df[col_elaborador] == "Bento") &
-            (df[col_cadastro].dt.month == mes_atual) &
-            (df[col_cadastro].dt.year == ano_atual)
-        ]
-
-        rodner_mes = df[
-            (df[col_elaborador] == "Rodner") &
-            (df[col_cadastro].dt.month == mes_atual) &
-            (df[col_cadastro].dt.year == ano_atual)
-        ]
-    else:
-        bento_mes = pd.DataFrame()
-        rodner_mes = pd.DataFrame()
+    df_validas = df[
+        (df["Inicio"].notna()) &
+        (df["Termino"].notna()) &
+        (df["Termino"] >= df["Inicio"])
+    ].copy()
 
     # ======================================================
-    # CARDS SUPERIORES (PADRÃO IGUAL AOS LATERAIS)
+    # DIAS ÚTEIS CORRETOS
+    # ======================================================
+
+    df_validas["Dias_Uteis"] = df_validas.apply(
+        lambda row: np.busday_count(
+            row["Inicio"].date(),
+            row["Termino"].date()
+        ),
+        axis=1
+    )
+
+    tempo_medio = df_validas["Dias_Uteis"].mean()
+
+    # ======================================================
+    # CONTAGEM MÊS VIGENTE (POR INÍCIO)
+    # ======================================================
+
+    df_mes = df_validas[
+        (df_validas["Inicio"].dt.month == mes_atual) &
+        (df_validas["Inicio"].dt.year == ano_atual)
+    ]
+
+    # IMPORTANTE: remover duplicidade real
+    # Se tiver coluna "Pedido" ou "OP", use ela aqui
+    if "Pedido" in df_mes.columns:
+        df_mes = df_mes.drop_duplicates(subset=["Pedido"])
+    else:
+        df_mes = df_mes.drop_duplicates()
+
+    total_mes = len(df_mes)
+
+    # ======================================================
+    # CONTAGEM POR COLABORADOR
+    # ======================================================
+
+    bento_mes = df_mes[df_mes["Elaborador"].str.upper() == "BENTO"]
+    rodner_mes = df_mes[df_mes["Elaborador"].str.upper() == "RODNER"]
+
+    # ======================================================
+    # CARDS
     # ======================================================
 
     c1, c2, c3, c4 = st.columns(4)
 
     c1.markdown(f"""
-    <div class="card-padrao">
+    <div class="card">
         <div>(Mês atual) OP's Geradas</div>
-        <div class="big-number">{len(op_mes)}</div>
+        <div class="big-number">{total_mes}</div>
     </div>
     """, unsafe_allow_html=True)
 
     c2.markdown(f"""
-    <div class="card-padrao">
+    <div class="card">
         <div>Bento - OP's (Mês atual)</div>
         <div class="big-number">{len(bento_mes)}</div>
     </div>
     """, unsafe_allow_html=True)
 
     c3.markdown(f"""
-    <div class="card-padrao">
+    <div class="card">
         <div>Rodner - OP's (Mês atual)</div>
         <div class="big-number">{len(rodner_mes)}</div>
     </div>
     """, unsafe_allow_html=True)
 
     c4.markdown(f"""
-    <div class="card-padrao">
-        <div>Demanda Atual</div>
-        <div class="big-number">{len(demanda)}</div>
+    <div class="card">
+        <div>Tempo Médio (Dias úteis)</div>
+        <div class="big-number">{round(tempo_medio,1)}</div>
     </div>
     """, unsafe_allow_html=True)
 
-    st.markdown("<br>", unsafe_allow_html=True)
-
     # ======================================================
-    # LAYOUT PRINCIPAL
+    # GRÁFICO NOV/2025 → ATUAL
     # ======================================================
 
-    col_left, col_right = st.columns([1,3])
+    inicio_grafico = pd.Timestamp("2025-11-01")
 
-    with col_left:
+    df_grafico = df_validas[
+        df_validas["Inicio"] >= inicio_grafico
+    ]
 
-        st.markdown(f"""
-        <div class="card-padrao">
-            <div>Tempo médio de Liberação / OP (Dias úteis)</div>
-            <div class="big-number">{round(tempo_medio,1) if not np.isnan(tempo_medio) else "-"}</div>
-        </div>
-        """, unsafe_allow_html=True)
+    df_grafico["AnoMes"] = df_grafico["Inicio"].dt.to_period("M")
+    mensal = df_grafico.groupby("AnoMes").size()
 
-        st.markdown(f"""
-        <div class="card-padrao">
-            <div>Quantidade aguardando informações</div>
-            <div class="big-number">{len(demanda)}</div>
-        </div>
-        """, unsafe_allow_html=True)
+    media = mensal.mean()
 
-        st.markdown(f"""
-        <div class="card-padrao">
-            <div>Recados</div>
-            <br>
-            Auditoria cliente dias 24 e 25.
-        </div>
-        """, unsafe_allow_html=True)
+    fig = go.Figure()
 
-    with col_right:
+    fig.add_bar(
+        x=mensal.index.astype(str),
+        y=mensal.values,
+        marker_color="#bcbcbc"
+    )
 
-        df_grafico["AnoMes"] = df_grafico[col_cadastro].dt.to_period("M")
-        mensal = df_grafico.groupby("AnoMes").size()
-        media = mensal.mean()
+    fig.add_hline(
+        y=media,
+        line_color="green",
+        annotation_text=f"Média ({round(media,0)})"
+    )
 
-        fig = go.Figure()
+    fig.update_layout(
+        plot_bgcolor="white",
+        paper_bgcolor="white",
+        margin=dict(l=10,r=10,t=10,b=10)
+    )
 
-        fig.add_bar(
-            x=mensal.index.astype(str),
-            y=mensal.values,
-            marker_color="#bcbcbc"
-        )
-
-        fig.add_hline(
-            y=media,
-            line_color="green",
-            annotation_text=f"Média ({round(media,0)})"
-        )
-
-        fig.update_layout(
-            margin=dict(l=10,r=10,t=10,b=10),
-            plot_bgcolor="white",
-            paper_bgcolor="white"
-        )
-
-        st.markdown('<div class="chart-container">', unsafe_allow_html=True)
-        st.plotly_chart(fig, use_container_width=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+    st.plotly_chart(fig, use_container_width=True)
 
 else:
-    st.info("Carregue a base Excel (.xlsx) para visualizar o dashboard.")
+    st.info("Carregue a base Excel.")

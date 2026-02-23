@@ -61,11 +61,25 @@ st.title("Dashboard Operações - OPS")
 arquivo = st.file_uploader("Carregar base Excel", type=["xlsx"])
 
 if arquivo is not None:
-    df_op = pd.read_excel(arquivo, sheet_name="OP")
-    df_opr = pd.read_excel(arquivo, sheet_name="OPR")
 
-    df_op = df[df["Tipo"] == "OP"].copy()
-    df_opr = df[df["Tipo"] == "OPR"].copy()
+    xls = pd.ExcelFile(arquivo)
+    abas = xls.sheet_names
+
+    # OP
+    aba_op = [a for a in abas if "OP" == a.upper().strip()]
+    if aba_op:
+        df_op = pd.read_excel(arquivo, sheet_name=aba_op[0])
+    else:
+        st.error("Aba OP não encontrada.")
+        st.stop()
+
+    # OPR (procura qualquer aba que contenha OPR)
+    aba_opr = [a for a in abas if "OPR" in a.upper()]
+    if aba_opr:
+        df_opr = pd.read_excel(arquivo, sheet_name=aba_opr[0])
+    else:
+        st.warning("Aba de Retrabalho não encontrada.")
+        df_opr = pd.DataFrame()
 
     # Converter datas
     datas_op = ["Data Cadastro", "Data Entrega", "Data Início", "Data Término"]
@@ -204,6 +218,7 @@ if arquivo is not None:
 
 else:
     st.info("Carregue a base para visualizar o dashboard.")
+
 
 
 

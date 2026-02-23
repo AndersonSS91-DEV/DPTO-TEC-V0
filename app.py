@@ -58,11 +58,11 @@ menu = st.sidebar.radio(
 
 st.title("Dashboard Operações - OPS")
 
-arquivo = st.file_uploader("Carregar base CSV", type=["csv"])
+arquivo = st.file_uploader("Carregar base Excel", type=["xlsx"])
 
 if arquivo is not None:
-
-    df = pd.read_csv(arquivo, sep=";", encoding="utf-8")
+    df_op = pd.read_excel(arquivo, sheet_name="OP")
+    df_opr = pd.read_excel(arquivo, sheet_name="OPR")
 
     df_op = df[df["Tipo"] == "OP"].copy()
     df_opr = df[df["Tipo"] == "OPR"].copy()
@@ -204,3 +204,4 @@ if arquivo is not None:
 
 else:
     st.info("Carregue a base para visualizar o dashboard.")
+

@@ -1,5 +1,5 @@
 # ==========================================================
-# DASHBOARD OPS - MBF EXECUTIVO (LAYOUT FIEL)
+# DASHBOARD OPS - MBF EXECUTIVO V2
 # ==========================================================
 
 import streamlit as st
@@ -11,66 +11,53 @@ from datetime import datetime
 st.set_page_config(layout="wide")
 
 # ==========================================================
-# CSS EXECUTIVO
+# CSS VISUAL MBF
 # ==========================================================
 
 st.markdown("""
 <style>
 
-/* Fundo geral */
 .stApp {
     background-color: #eef2f5;
 }
 
-/* Remove padding padrão */
 .block-container {
     padding-top: 1rem;
     padding-left: 2rem;
     padding-right: 2rem;
 }
 
-/* Sidebar */
-section[data-testid="stSidebar"] {
-    background-color: #1f2430;
-    color: white;
-}
-
-/* Header topo */
-.top-header {
+/* Header */
+.header-mbf {
     background-color: #dce6ea;
-    padding: 20px;
+    padding: 18px;
     border-radius: 6px;
     margin-bottom: 20px;
 }
 
-/* Cards horizontais */
+/* Cards topo */
 .card-top {
     background: linear-gradient(90deg,#1f2430,#2b3140);
     padding: 15px;
     border-radius: 8px;
     color: white;
-    height: 110px;
+    height: 115px;
+}
+
+/* Número grande */
+.big-number {
+    font-size: 30px;
+    font-weight: bold;
+    margin-top: 5px;
 }
 
 /* Cards laterais */
 .card-side {
-    background-color: #ffffff;
+    background-color: white;
     border-top: 35px solid #1f2430;
     padding: 15px;
     border-radius: 8px;
     margin-bottom: 20px;
-}
-
-/* Título card lateral */
-.side-title {
-    font-size: 13px;
-    margin-bottom: 8px;
-}
-
-/* Valor principal */
-.big-number {
-    font-size: 28px;
-    font-weight: bold;
 }
 
 /* Container gráfico */
@@ -89,35 +76,38 @@ section[data-testid="stSidebar"] {
 # ==========================================================
 
 st.markdown("""
-<div class="top-header">
+<div class="header-mbf">
     <h2>Dashboard Operações - OPS</h2>
 </div>
 """, unsafe_allow_html=True)
-
-# ==========================================================
-# UPLOAD
-# ==========================================================
 
 arquivo = st.file_uploader("Carregar base Excel (.xlsx)", type=["xlsx"])
 
 if arquivo:
 
-    df = pd.read_excel(arquivo)
+    # ======================================================
+    # LEITURA ABA OP
+    # ======================================================
 
+    df = pd.read_excel(arquivo, sheet_name=0)
     df.columns = df.columns.str.strip()
 
-    # Detecta colunas automaticamente
+    # Detectar colunas automaticamente
     col_cadastro = next((c for c in df.columns if "cadastro" in c.lower()), None)
     col_entrega = next((c for c in df.columns if "entrega" in c.lower()), None)
     col_termino = next((c for c in df.columns if "termino" in c.lower() or "término" in c.lower()), None)
     col_inicio = next((c for c in df.columns if "inicio" in c.lower()), None)
+    col_elaborador = next((c for c in df.columns if "elaborador" in c.lower()), None)
 
-    # Converte datas
+    # Converter datas
     for c in [col_cadastro, col_entrega, col_termino, col_inicio]:
         if c:
             df[c] = pd.to_datetime(df[c], errors="coerce")
 
-    # Dias úteis
+    # ======================================================
+    # DIAS ÚTEIS
+    # ======================================================
+
     def dias_uteis(inicio, fim):
         if pd.isna(inicio) or pd.isna(fim):
             return np.nan
@@ -131,8 +121,20 @@ if arquivo:
     else:
         df["Dias_Uteis"] = np.nan
 
+    # ======================================================
+    # FILTRO OUTUBRO → NOVEMBRO
+    # ======================================================
+
+    df_filtrado = df[
+        (df[col_cadastro].dt.month >= 10) &
+        (df[col_cadastro].dt.month <= 11)
+    ]
+
+    # ======================================================
     # KPIs
-    mes_atual = datetime.now().month
+    # ======================================================
+
+    mes_atual = 11  # Novembro fixo
     ano_atual = datetime.now().year
 
     op_mes = df[
@@ -147,44 +149,48 @@ if arquivo:
         (df[col_termino].isna())
     ] if col_inicio and col_termino else pd.DataFrame()
 
+    # Bento e Rodner
+    bento = df[df[col_elaborador] == "Bento"] if col_elaborador else pd.DataFrame()
+    rodner = df[df[col_elaborador] == "Rodner"] if col_elaborador else pd.DataFrame()
+
     # ======================================================
-    # CARDS SUPERIORES
+    # CARDS TOPO
     # ======================================================
 
     c1, c2, c3, c4 = st.columns(4)
 
     c1.markdown(f"""
     <div class="card-top">
-        <div>OP's Geradas (Mês atual)</div>
+        <div>(Mês atual) OP's Geradas</div>
         <div class="big-number">{len(op_mes)}</div>
     </div>
     """, unsafe_allow_html=True)
 
     c2.markdown(f"""
     <div class="card-top">
-        <div>Tempo Médio (d.u.)</div>
-        <div class="big-number">{round(tempo_medio,1) if not np.isnan(tempo_medio) else "-"}</div>
+        <div>Bento - OP's (Mês atual)</div>
+        <div class="big-number">{len(bento)}</div>
     </div>
     """, unsafe_allow_html=True)
 
     c3.markdown(f"""
+    <div class="card-top">
+        <div>Rodner - OP's (Mês atual)</div>
+        <div class="big-number">{len(rodner)}</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    c4.markdown(f"""
     <div class="card-top">
         <div>Demanda Atual</div>
         <div class="big-number">{len(demanda)}</div>
     </div>
     """, unsafe_allow_html=True)
 
-    c4.markdown(f"""
-    <div class="card-top">
-        <div>Indicador Geral</div>
-        <div class="big-number">OK</div>
-    </div>
-    """, unsafe_allow_html=True)
-
     st.markdown("<br>", unsafe_allow_html=True)
 
     # ======================================================
-    # LAYOUT PRINCIPAL (LATERAL + GRÁFICO)
+    # LAYOUT PRINCIPAL
     # ======================================================
 
     col_left, col_right = st.columns([1,3])
@@ -193,29 +199,30 @@ if arquivo:
 
         st.markdown(f"""
         <div class="card-side">
-            <div class="side-title">Tempo médio de Liberação / OP</div>
+            <div>Tempo médio de Liberação / OP (Dias úteis)</div>
             <div class="big-number">{round(tempo_medio,1) if not np.isnan(tempo_medio) else "-"}</div>
         </div>
         """, unsafe_allow_html=True)
 
         st.markdown(f"""
         <div class="card-side">
-            <div class="side-title">Quantidade aguardando</div>
+            <div>Quantidade aguardando informações</div>
             <div class="big-number">{len(demanda)}</div>
         </div>
         """, unsafe_allow_html=True)
 
         st.markdown(f"""
         <div class="card-side">
-            <div class="side-title">Recados</div>
-            Auditoria do cliente nos dias 24 e 25.
+            <div>Recados</div>
+            <br>
+            - Auditoria cliente dias 24 e 25.
         </div>
         """, unsafe_allow_html=True)
 
     with col_right:
 
-        df["AnoMes"] = df[col_cadastro].dt.to_period("M")
-        mensal = df.groupby("AnoMes").size()
+        df_filtrado["AnoMes"] = df_filtrado[col_cadastro].dt.to_period("M")
+        mensal = df_filtrado.groupby("AnoMes").size()
         media = mensal.mean()
 
         fig = go.Figure()
@@ -243,4 +250,4 @@ if arquivo:
         st.markdown('</div>', unsafe_allow_html=True)
 
 else:
-    st.info("Carregue a base Excel para visualizar o dashboard.")
+    st.info("Carregue a base Excel (.xlsx) para visualizar o dashboard.")

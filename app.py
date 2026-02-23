@@ -37,6 +37,7 @@ st.markdown("""
     padding: 15px;
     border-radius: 8px;
     height: 120px;
+    margin-bottom: 20px;
 }
 
 .big-number {
@@ -48,8 +49,9 @@ st.markdown("""
 .chart-container {
     background-color: white;
     border-radius: 10px;
-    padding: 15px;
+    padding: 20px;
     border-top: 45px solid #1f2430;
+    margin-top: 10px;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -92,7 +94,14 @@ if arquivo:
             return np.nan
         if termino < entrega:
             return np.nan
-        return np.busday_count(entrega.date(), termino.date())
+
+        dias = np.busday_count(entrega.date(), termino.date())
+
+        # incluir o dia final se for dia útil
+        if np.is_busday(termino.date()):
+            dias += 1
+
+        return dias
 
     if col_entrega and col_termino:
         df["Dias_Uteis"] = df.apply(
@@ -101,6 +110,9 @@ if arquivo:
         )
     else:
         df["Dias_Uteis"] = np.nan
+
+    # Remover distorções absurdas (>60 dias úteis)
+    df_validos = df[(df["Dias_Uteis"].notna()) & (df["Dias_Uteis"] <= 60)]
 
     # =============================
     # KPIs
@@ -118,7 +130,7 @@ if arquivo:
     else:
         op_mes = pd.DataFrame()
 
-    tempo_medio = df["Dias_Uteis"].dropna().mean()
+    tempo_medio = df_validos["Dias_Uteis"].mean()
 
     demanda = df[
         (df[col_inicio].isna()) |
@@ -178,8 +190,6 @@ if arquivo:
     </div>
     """, unsafe_allow_html=True)
 
-    st.markdown("<br>", unsafe_allow_html=True)
-
     # =============================
     # LAYOUT
     # =============================
@@ -191,7 +201,7 @@ if arquivo:
         st.markdown(f"""
         <div class="card-padrao">
             <div>Tempo médio de Liberação / OP (Dias úteis)</div>
-            <div class="big-number">{round(tempo_medio,1) if not np.isnan(tempo_medio) else "-"}</div>
+            <div class="big-number">{round(tempo_medio,2) if not np.isnan(tempo_medio) else "-"}</div>
         </div>
         """, unsafe_allow_html=True)
 
@@ -202,14 +212,29 @@ if arquivo:
         </div>
         """, unsafe_allow_html=True)
 
+        st.markdown(f"""
+        <div class="card-padrao">
+            <div>Recados</div>
+            <br>
+            Auditoria cliente dias 24 e 25.
+        </div>
+        """, unsafe_allow_html=True)
+
     with col_right:
 
         if col_cadastro:
+
             inicio_grafico = pd.Timestamp("2025-11-01")
-            df_grafico = df[df[col_cadastro] >= inicio_grafico]
+            fim_grafico = pd.Timestamp("2026-02-29")
+
+            df_grafico = df[
+                (df[col_cadastro] >= inicio_grafico) &
+                (df[col_cadastro] <= fim_grafico)
+            ]
 
             df_grafico["AnoMes"] = df_grafico[col_cadastro].dt.to_period("M")
-            mensal = df_grafico.groupby("AnoMes").size()
+
+            mensal = df_grafico.groupby("AnoMes").size().sort_index()
             media = mensal.mean()
 
             fig = go.Figure()
@@ -227,6 +252,8 @@ if arquivo:
             )
 
             fig.update_layout(
+                xaxis_title="",
+                yaxis_title="Quantidade de OP's",
                 margin=dict(l=10,r=10,t=10,b=10),
                 plot_bgcolor="white",
                 paper_bgcolor="white"

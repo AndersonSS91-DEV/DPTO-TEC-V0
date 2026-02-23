@@ -138,7 +138,7 @@ if arquivo:
     else:
         op_mes = pd.DataFrame()
 
-    tempo_medio = df_validos["Dias"].mean()
+    tempo_medio = df_validos["Dias_Uteis"].mean()
 
     demanda = df[
         (df[col_inicio].isna()) |
@@ -249,4 +249,5 @@ if arquivo:
 
 else:
     st.info("Carregue a base Excel (.xlsx) para visualizar o dashboard.")
+
 

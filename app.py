@@ -185,7 +185,7 @@ if arquivo:
 
     with col_left:
 
-        st.markdown(card("Tempo médio de Liberação / OP (Dias úteis)",
+        st.markdown(card("Tempo médio de Liberação / OP (Dias)",
                          round(tempo_medio,2) if not np.isnan(tempo_medio) else "-"),
                     unsafe_allow_html=True)
 
@@ -249,5 +249,6 @@ if arquivo:
 
 else:
     st.info("Carregue a base Excel (.xlsx) para visualizar o dashboard.")
+
 
 

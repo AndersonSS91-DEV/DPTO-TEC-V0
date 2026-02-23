@@ -225,7 +225,8 @@ if arquivo:
         if col_cadastro:
 
             inicio_grafico = pd.Timestamp("2025-11-01")
-            fim_grafico = pd.Timestamp("2026-02-29")
+            # último dia do mês atual automaticamente
+            fim_grafico = pd.Timestamp(hoje.year, hoje.month, 1) + pd.offsets.MonthEnd(0)
 
             df_grafico = df[
                 (df[col_cadastro] >= inicio_grafico) &
@@ -265,3 +266,4 @@ if arquivo:
 
 else:
     st.info("Carregue a base Excel (.xlsx) para visualizar o dashboard.")
+

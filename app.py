@@ -1,5 +1,5 @@
 # ==========================================================
-# DASHBOARD OPS - MBF EXECUTIVO V2
+# DASHBOARD OPS - MBF EXECUTIVO FINAL
 # ==========================================================
 
 import streamlit as st
@@ -11,15 +11,13 @@ from datetime import datetime
 st.set_page_config(layout="wide")
 
 # ==========================================================
-# CSS VISUAL MBF
+# CSS PADRÃO EXECUTIVO
 # ==========================================================
 
 st.markdown("""
 <style>
 
-.stApp {
-    background-color: #eef2f5;
-}
+.stApp { background-color: #eef2f5; }
 
 .block-container {
     padding-top: 1rem;
@@ -35,29 +33,20 @@ st.markdown("""
     margin-bottom: 20px;
 }
 
-/* Cards topo */
-.card-top {
-    background: linear-gradient(90deg,#1f2430,#2b3140);
-    padding: 15px;
-    border-radius: 8px;
-    color: white;
-    height: 115px;
-}
-
-/* Número grande */
-.big-number {
-    font-size: 30px;
-    font-weight: bold;
-    margin-top: 5px;
-}
-
-/* Cards laterais */
-.card-side {
+/* Card padrão */
+.card-padrao {
     background-color: white;
     border-top: 35px solid #1f2430;
     padding: 15px;
     border-radius: 8px;
-    margin-bottom: 20px;
+    height: 120px;
+}
+
+/* Número grande */
+.big-number {
+    font-size: 28px;
+    font-weight: bold;
+    margin-top: 10px;
 }
 
 /* Container gráfico */
@@ -86,7 +75,7 @@ arquivo = st.file_uploader("Carregar base Excel (.xlsx)", type=["xlsx"])
 if arquivo:
 
     # ======================================================
-    # LEITURA ABA OP
+    # LEITURA
     # ======================================================
 
     df = pd.read_excel(arquivo, sheet_name=0)
@@ -122,20 +111,24 @@ if arquivo:
         df["Dias_Uteis"] = np.nan
 
     # ======================================================
-    # FILTRO OUTUBRO → NOVEMBRO
+    # JANELA DO GRÁFICO (NOV/2025 até mês atual)
     # ======================================================
 
-    df_filtrado = df[
-        (df[col_cadastro].dt.month >= 10) &
-        (df[col_cadastro].dt.month <= 11)
+    inicio_grafico = pd.Timestamp("2025-11-01")
+    hoje = datetime.now()
+    fim_grafico = pd.Timestamp(hoje.year, hoje.month, 1) + pd.offsets.MonthEnd(1)
+
+    df_grafico = df[
+        (df[col_cadastro] >= inicio_grafico) &
+        (df[col_cadastro] <= fim_grafico)
     ]
 
     # ======================================================
     # KPIs
     # ======================================================
 
-    mes_atual = 11  # Novembro fixo
-    ano_atual = datetime.now().year
+    mes_atual = hoje.month
+    ano_atual = hoje.year
 
     op_mes = df[
         (df[col_cadastro].dt.month == mes_atual) &
@@ -149,39 +142,51 @@ if arquivo:
         (df[col_termino].isna())
     ] if col_inicio and col_termino else pd.DataFrame()
 
-    # Bento e Rodner
-    bento = df[df[col_elaborador] == "Bento"] if col_elaborador else pd.DataFrame()
-    rodner = df[df[col_elaborador] == "Rodner"] if col_elaborador else pd.DataFrame()
+    if col_elaborador:
+        bento_mes = df[
+            (df[col_elaborador] == "Bento") &
+            (df[col_cadastro].dt.month == mes_atual) &
+            (df[col_cadastro].dt.year == ano_atual)
+        ]
+
+        rodner_mes = df[
+            (df[col_elaborador] == "Rodner") &
+            (df[col_cadastro].dt.month == mes_atual) &
+            (df[col_cadastro].dt.year == ano_atual)
+        ]
+    else:
+        bento_mes = pd.DataFrame()
+        rodner_mes = pd.DataFrame()
 
     # ======================================================
-    # CARDS TOPO
+    # CARDS SUPERIORES (PADRÃO IGUAL AOS LATERAIS)
     # ======================================================
 
     c1, c2, c3, c4 = st.columns(4)
 
     c1.markdown(f"""
-    <div class="card-top">
+    <div class="card-padrao">
         <div>(Mês atual) OP's Geradas</div>
         <div class="big-number">{len(op_mes)}</div>
     </div>
     """, unsafe_allow_html=True)
 
     c2.markdown(f"""
-    <div class="card-top">
+    <div class="card-padrao">
         <div>Bento - OP's (Mês atual)</div>
-        <div class="big-number">{len(bento)}</div>
+        <div class="big-number">{len(bento_mes)}</div>
     </div>
     """, unsafe_allow_html=True)
 
     c3.markdown(f"""
-    <div class="card-top">
+    <div class="card-padrao">
         <div>Rodner - OP's (Mês atual)</div>
-        <div class="big-number">{len(rodner)}</div>
+        <div class="big-number">{len(rodner_mes)}</div>
     </div>
     """, unsafe_allow_html=True)
 
     c4.markdown(f"""
-    <div class="card-top">
+    <div class="card-padrao">
         <div>Demanda Atual</div>
         <div class="big-number">{len(demanda)}</div>
     </div>
@@ -198,31 +203,31 @@ if arquivo:
     with col_left:
 
         st.markdown(f"""
-        <div class="card-side">
+        <div class="card-padrao">
             <div>Tempo médio de Liberação / OP (Dias úteis)</div>
             <div class="big-number">{round(tempo_medio,1) if not np.isnan(tempo_medio) else "-"}</div>
         </div>
         """, unsafe_allow_html=True)
 
         st.markdown(f"""
-        <div class="card-side">
+        <div class="card-padrao">
             <div>Quantidade aguardando informações</div>
             <div class="big-number">{len(demanda)}</div>
         </div>
         """, unsafe_allow_html=True)
 
         st.markdown(f"""
-        <div class="card-side">
+        <div class="card-padrao">
             <div>Recados</div>
             <br>
-            - Auditoria cliente dias 24 e 25.
+            Auditoria cliente dias 24 e 25.
         </div>
         """, unsafe_allow_html=True)
 
     with col_right:
 
-        df_filtrado["AnoMes"] = df_filtrado[col_cadastro].dt.to_period("M")
-        mensal = df_filtrado.groupby("AnoMes").size()
+        df_grafico["AnoMes"] = df_grafico[col_cadastro].dt.to_period("M")
+        mensal = df_grafico.groupby("AnoMes").size()
         media = mensal.mean()
 
         fig = go.Figure()

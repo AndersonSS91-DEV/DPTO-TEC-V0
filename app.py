@@ -71,19 +71,23 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==========================================================
-# HEADER COM LOGO BASE64
+# HEADER COM LOGO
 # ==========================================================
 
-logo_base64 = """
-COLE_AQUI_O_BASE64_COMPLETO_DA_LOGO
-"""
+from PIL import Image
 
-st.markdown(f"""
-<div class="header-mbf" style="display:flex; align-items:center; gap:18px;">
-    <img src="data:image/png;base64,{logo_base64}" width="70">
-    <h2 style="margin:0;">Dashboard Operações - OPS</h2>
-</div>
-""", unsafe_allow_html=True)
+logo = Image.open("logo_mbf.png")
+
+col_logo, col_title = st.columns([1,8])
+
+with col_logo:
+    st.image(logo, width=80)
+
+with col_title:
+    st.markdown(
+        "<h2 style='margin-top:15px;'>Dashboard - OP´s - Departamento Técnico MBF</h2>",
+        unsafe_allow_html=True
+    ))
 
 st.markdown(f"""
 <div class="header-mbf" style="display:flex; align-items:center; gap:18px;">
@@ -264,6 +268,7 @@ if arquivo:
 
 else:
     st.info("Carregue a base Excel (.xlsx) para visualizar o dashboard.")
+
 
 
 

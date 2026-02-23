@@ -224,46 +224,58 @@ if arquivo:
 
         if col_cadastro:
 
-            inicio_grafico = pd.Timestamp("2025-11-01")
-            # último dia do mês atual automaticamente
-            fim_grafico = pd.Timestamp(hoje.year, hoje.month, 1) + pd.offsets.MonthEnd(0)
+    inicio_grafico = pd.Timestamp("2025-11-01")
+    fim_grafico = pd.Timestamp(hoje.year, hoje.month, 1) + pd.offsets.MonthEnd(0)
 
-            df_grafico = df[
-                (df[col_cadastro] >= inicio_grafico) &
-                (df[col_cadastro] <= fim_grafico)
-            ]
+    df_grafico = df[
+        (df[col_cadastro] >= inicio_grafico) &
+        (df[col_cadastro] <= fim_grafico)
+    ].copy()
 
-            df_grafico["AnoMes"] = df_grafico[col_cadastro].dt.to_period("M")
+    # Criar coluna mês formatada
+    df_grafico["Mes"] = df_grafico[col_cadastro].dt.strftime("%b/%y")
 
-            mensal = df_grafico.groupby("AnoMes").size().sort_index()
-            media = mensal.mean()
+    mensal = df_grafico.groupby("Mes").size()
 
-            fig = go.Figure()
+    # Ordenar meses corretamente
+    ordem_meses = (
+        pd.date_range(start=inicio_grafico, end=fim_grafico, freq="MS")
+        .strftime("%b/%y")
+        .tolist()
+    )
 
-            fig.add_bar(
-                x=mensal.index.astype(str),
-                y=mensal.values,
-                marker_color="#bcbcbc"
-            )
+    mensal = mensal.reindex(ordem_meses, fill_value=0)
 
-            fig.add_hline(
-                y=media,
-                line_color="green",
-                annotation_text=f"Média ({round(media,0)})"
-            )
+    media = mensal.mean()
 
-            fig.update_layout(
-                xaxis_title="",
-                yaxis_title="Quantidade de OP's",
-                margin=dict(l=10,r=10,t=10,b=10),
-                plot_bgcolor="white",
-                paper_bgcolor="white"
-            )
+    fig = go.Figure()
 
-            st.markdown('<div class="chart-container">', unsafe_allow_html=True)
-            st.plotly_chart(fig, use_container_width=True)
-            st.markdown('</div>', unsafe_allow_html=True)
+    fig.add_bar(
+        x=mensal.index,
+        y=mensal.values,
+        marker_color="#bcbcbc"
+    )
 
+    fig.add_hline(
+        y=media,
+        line_color="green",
+        annotation_text=f"Média ({round(media,0)})"
+    )
+
+    fig.update_layout(
+        xaxis_title="",
+        yaxis_title="Quantidade de OP's",
+        margin=dict(l=10, r=10, t=10, b=10),
+        plot_bgcolor="white",
+        paper_bgcolor="white",
+        xaxis=dict(type="category")  # força eixo categórico
+    )
+
+    st.markdown('<div class="chart-container">', unsafe_allow_html=True)
+    st.plotly_chart(fig, use_container_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+    
 else:
     st.info("Carregue a base Excel (.xlsx) para visualizar o dashboard.")
+
 

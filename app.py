@@ -75,7 +75,24 @@ st.markdown("""
 # ==========================================================
 
 st.markdown("""
-<div class="header-mbf">
+
+logo_base64 = """
+iVBORw0KGgoAAAANSUhEUgAAAJYAAACWCAYAAADLabXuAAAACXBIWXMAAAsTAAALEwEAmpwYAAAg
+AElEQVR4nO2dW4xcVZ3HP+fc3XvWvXu7u3u7u7u7u3u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u
+7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u
+7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u
+7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u
+7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u
+7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u
+... (truncated for readability)
+"""
+
+st.markdown(f"""
+<div class="header-mbf" style="display:flex; align-items:center; gap:18px;">
+    <img src="data:image/png;base64,{logo_base64}" width="70">
+    <h2 style="margin:0;">Dashboard Operações - OPS</h2>
+</div>
+""", unsafe_allow_html=True)
     <h2>Dashboard - OP´s - Departamento Técnico MBF</h2>
 </div>
 """, unsafe_allow_html=True)
@@ -249,6 +266,7 @@ if arquivo:
 
 else:
     st.info("Carregue a base Excel (.xlsx) para visualizar o dashboard.")
+
 
 
 

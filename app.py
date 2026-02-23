@@ -61,7 +61,7 @@ st.title("Dashboard Operações - OPS")
 arquivo = st.file_uploader("Carregar base csv", type=["csv"])
 
 if arquivo is not None:
-    df_op = pd.read_csv(arquivo, sheet_name="OP")
+    df_op = pd.read_csv(arquivo, sheet_name="DPTO_TÉCNICO_TESTE")
     df_opr = pd.read_csv(arquivo, sheet_name="OPR")
 
     df_op = df[df["Tipo"] == "OP"].copy()
@@ -204,5 +204,6 @@ if arquivo is not None:
 
 else:
     st.info("Carregue a base para visualizar o dashboard.")
+
 
 

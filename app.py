@@ -11,7 +11,7 @@ from datetime import datetime
 st.set_page_config(layout="wide")
 
 # ==========================================================
-# CSS PADRÃO EXECUTIVO
+# CSS EXECUTIVO MBF
 # ==========================================================
 
 st.markdown("""
@@ -24,37 +24,55 @@ st.markdown("""
     padding-right: 2rem;
 }
 
+/* HEADER */
 .header-mbf {
     background-color: #dce6ea;
     padding: 18px;
     border-radius: 6px;
-    margin-bottom: 20px;
+    margin-bottom: 25px;
 }
 
-.card-padrao {
-    background-color: white;
-    border-top: 35px solid #1f2430;
-    padding: 15px;
+/* CARD EXECUTIVO */
+.card-mbf {
     border-radius: 8px;
-    height: 120px;
-    margin-bottom: 20px;
+    overflow: hidden;
+    background-color: white;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    margin-bottom: 25px;
 }
 
-.big-number {
+.card-header {
+    background-color: #1f2430;
+    color: white;
+    padding: 8px 12px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.card-body {
+    padding: 18px 15px;
+}
+
+.card-value {
     font-size: 28px;
     font-weight: bold;
-    margin-top: 10px;
+    color: black;
 }
 
+/* GRÁFICO */
 .chart-container {
     background-color: white;
     border-radius: 10px;
-    padding: 20px;
+    padding: 25px;
     border-top: 45px solid #1f2430;
-    margin-top: 10px;
+    margin-left: 30px;
 }
 </style>
 """, unsafe_allow_html=True)
+
+# ==========================================================
+# HEADER
+# ==========================================================
 
 st.markdown("""
 <div class="header-mbf">
@@ -65,10 +83,6 @@ st.markdown("""
 arquivo = st.file_uploader("Carregar base Excel (.xlsx)", type=["xlsx"])
 
 if arquivo:
-
-    # =============================
-    # LEITURA
-    # =============================
 
     df = pd.read_excel(arquivo, sheet_name=0)
     df.columns = df.columns.str.strip()
@@ -94,13 +108,9 @@ if arquivo:
             return np.nan
         if termino < entrega:
             return np.nan
-
         dias = np.busday_count(entrega.date(), termino.date())
-
-        # incluir o dia final se for dia útil
         if np.is_busday(termino.date()):
             dias += 1
-
         return dias
 
     if col_entrega and col_termino:
@@ -111,7 +121,6 @@ if arquivo:
     else:
         df["Dias_Uteis"] = np.nan
 
-    # Remover distorções absurdas (>60 dias úteis)
     df_validos = df[(df["Dias_Uteis"].notna()) & (df["Dias_Uteis"] <= 60)]
 
     # =============================
@@ -121,7 +130,6 @@ if arquivo:
     mes_atual = hoje.month
     ano_atual = hoje.year
 
-    # OP mês (por INICIO)
     if col_inicio:
         op_mes = df[
             (df[col_inicio].dt.month == mes_atual) &
@@ -137,21 +145,13 @@ if arquivo:
         (df[col_termino].isna())
     ] if col_inicio and col_termino else pd.DataFrame()
 
-    # Elaboradores
     if col_elaborador and col_inicio:
-
         df_mes = df[
             (df[col_inicio].dt.month == mes_atual) &
             (df[col_inicio].dt.year == ano_atual)
         ]
-
-        bento_mes = df_mes[
-            df_mes[col_elaborador].str.upper().str.strip() == "BENTO"
-        ]
-
-        rodner_mes = df_mes[
-            df_mes[col_elaborador].str.upper().str.strip() == "RODNER"
-        ]
+        bento_mes = df_mes[df_mes[col_elaborador].str.upper().str.strip() == "BENTO"]
+        rodner_mes = df_mes[df_mes[col_elaborador].str.upper().str.strip() == "RODNER"]
     else:
         bento_mes = pd.DataFrame()
         rodner_mes = pd.DataFrame()
@@ -162,69 +162,41 @@ if arquivo:
 
     c1, c2, c3, c4 = st.columns(4)
 
-    c1.markdown(f"""
-    <div class="card-padrao">
-        <div>(Mês atual) OP's Geradas</div>
-        <div class="big-number">{len(op_mes)}</div>
-    </div>
-    """, unsafe_allow_html=True)
+    def card(titulo, valor):
+        return f"""
+        <div class="card-mbf">
+            <div class="card-header">{titulo}</div>
+            <div class="card-body">
+                <div class="card-value">{valor}</div>
+            </div>
+        </div>
+        """
 
-    c2.markdown(f"""
-    <div class="card-padrao">
-        <div>Bento - OP's (Mês atual)</div>
-        <div class="big-number">{len(bento_mes)}</div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    c3.markdown(f"""
-    <div class="card-padrao">
-        <div>Rodner - OP's (Mês atual)</div>
-        <div class="big-number">{len(rodner_mes)}</div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    c4.markdown(f"""
-    <div class="card-padrao">
-        <div>Demanda Atual</div>
-        <div class="big-number">{len(demanda)}</div>
-    </div>
-    """, unsafe_allow_html=True)
+    c1.markdown(card("(Mês atual) OP's Geradas", len(op_mes)), unsafe_allow_html=True)
+    c2.markdown(card("Bento - OP's (Mês atual)", len(bento_mes)), unsafe_allow_html=True)
+    c3.markdown(card("Rodner - OP's (Mês atual)", len(rodner_mes)), unsafe_allow_html=True)
+    c4.markdown(card("Demanda Atual", len(demanda)), unsafe_allow_html=True)
 
     # =============================
-    # LAYOUT
+    # LAYOUT PRINCIPAL
     # =============================
 
     col_left, col_right = st.columns([1,3])
 
     with col_left:
 
-        st.markdown(f"""
-        <div class="card-padrao">
-            <div>Tempo médio de Liberação / OP (Dias úteis)</div>
-            <div class="big-number">{round(tempo_medio,2) if not np.isnan(tempo_medio) else "-"}</div>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown(card("Tempo médio de Liberação / OP (Dias úteis)",
+                         round(tempo_medio,2) if not np.isnan(tempo_medio) else "-"),
+                    unsafe_allow_html=True)
 
-        st.markdown(f"""
-        <div class="card-padrao">
-            <div>Quantidade aguardando informações</div>
-            <div class="big-number">{len(demanda)}</div>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown(card("Quantidade aguardando informações", len(demanda)),
+                    unsafe_allow_html=True)
 
-        st.markdown(f"""
-        <div class="card-padrao">
-            <div>Recados</div>
-            <br>
-            Auditoria cliente dias 24 e 25.
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown(card("Recados",
+                         "Auditoria cliente dias 24 e 25."),
+                    unsafe_allow_html=True)
 
     with col_right:
-
-        # =============================
-        # GRÁFICO MENSAL (NOV/25 → MÊS ATUAL)
-        # =============================
 
         if col_cadastro:
 
@@ -236,12 +208,9 @@ if arquivo:
                 (df[col_cadastro] <= fim_grafico)
             ].copy()
 
-            # Criar coluna mês formatada
             df_grafico["Mes"] = df_grafico[col_cadastro].dt.strftime("%b/%y")
-
             mensal = df_grafico.groupby("Mes").size()
 
-            # Ordenar meses corretamente
             ordem_meses = (
                 pd.date_range(start=inicio_grafico, end=fim_grafico, freq="MS")
                 .strftime("%b/%y")
@@ -249,7 +218,6 @@ if arquivo:
             )
 
             mensal = mensal.reindex(ordem_meses, fill_value=0)
-
             media = mensal.mean()
 
             fig = go.Figure()
@@ -257,7 +225,8 @@ if arquivo:
             fig.add_bar(
                 x=mensal.index,
                 y=mensal.values,
-                marker_color="#bcbcbc"
+                marker_color="#bcbcbc",
+                width=0.5
             )
 
             fig.add_hline(
@@ -267,21 +236,16 @@ if arquivo:
             )
 
             fig.update_layout(
-                xaxis_title="",
-                yaxis_title="Quantidade de OP's",
-                margin=dict(l=10, r=10, t=10, b=10),
+                margin=dict(l=40, r=40, t=20, b=40),
                 plot_bgcolor="white",
                 paper_bgcolor="white",
-                xaxis=dict(type="category")
+                xaxis=dict(type="category"),
+                height=420
             )
 
             st.markdown('<div class="chart-container">', unsafe_allow_html=True)
             st.plotly_chart(fig, use_container_width=True)
             st.markdown('</div>', unsafe_allow_html=True)
-    
+
 else:
     st.info("Carregue a base Excel (.xlsx) para visualizar o dashboard.")
-
-
-
-

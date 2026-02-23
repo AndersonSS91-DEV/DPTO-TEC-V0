@@ -1,5 +1,5 @@
 # ==========================================================
-# DASHBOARD OPS - PADRÃO MBF (VERSÃO ESTÁVEL DIRETORIA)
+# DASHBOARD OPS - MBF EXECUTIVO (LAYOUT FIEL)
 # ==========================================================
 
 import streamlit as st
@@ -11,188 +11,219 @@ from datetime import datetime
 st.set_page_config(layout="wide")
 
 # ==========================================================
-# CSS CUSTOMIZADO
+# CSS EXECUTIVO
 # ==========================================================
 
 st.markdown("""
 <style>
-body { background-color: #eef3f7; }
 
-.card {
+/* Fundo geral */
+.stApp {
+    background-color: #eef2f5;
+}
+
+/* Remove padding padrão */
+.block-container {
+    padding-top: 1rem;
+    padding-left: 2rem;
+    padding-right: 2rem;
+}
+
+/* Sidebar */
+section[data-testid="stSidebar"] {
     background-color: #1f2430;
-    padding: 20px;
-    border-radius: 10px;
     color: white;
 }
 
-.metric-title {
-    font-size: 14px;
-    opacity: 0.7;
+/* Header topo */
+.top-header {
+    background-color: #dce6ea;
+    padding: 20px;
+    border-radius: 6px;
+    margin-bottom: 20px;
 }
 
-.metric-value {
-    font-size: 32px;
+/* Cards horizontais */
+.card-top {
+    background: linear-gradient(90deg,#1f2430,#2b3140);
+    padding: 15px;
+    border-radius: 8px;
+    color: white;
+    height: 110px;
+}
+
+/* Cards laterais */
+.card-side {
+    background-color: #ffffff;
+    border-top: 35px solid #1f2430;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+/* Título card lateral */
+.side-title {
+    font-size: 13px;
+    margin-bottom: 8px;
+}
+
+/* Valor principal */
+.big-number {
+    font-size: 28px;
     font-weight: bold;
 }
 
-.section-title {
-    font-size: 22px;
-    font-weight: 600;
-    margin-top: 30px;
+/* Container gráfico */
+.chart-container {
+    background-color: white;
+    border-radius: 10px;
+    padding: 15px;
+    border-top: 45px solid #1f2430;
 }
+
 </style>
 """, unsafe_allow_html=True)
 
 # ==========================================================
-# MENU
+# HEADER
 # ==========================================================
 
-menu = st.sidebar.radio(
-    "Navegação",
-    ["Dashboard OP", "Dashboard OPR"]
-)
+st.markdown("""
+<div class="top-header">
+    <h2>Dashboard Operações - OPS</h2>
+</div>
+""", unsafe_allow_html=True)
 
-st.title("Dashboard Operações - OPS")
+# ==========================================================
+# UPLOAD
+# ==========================================================
 
-arquivo = st.file_uploader("Carregar base Excel", type=["xlsx"])
+arquivo = st.file_uploader("Carregar base Excel (.xlsx)", type=["xlsx"])
 
-if arquivo is not None:
+if arquivo:
 
-    # ======================================================
-    # LEITURA INTELIGENTE DAS ABAS
-    # ======================================================
+    df = pd.read_excel(arquivo)
 
-    xls = pd.ExcelFile(arquivo)
-    abas = xls.sheet_names
+    df.columns = df.columns.str.strip()
 
-    # Localiza aba OP
-    aba_op = [a for a in abas if a.strip().upper() == "OP"]
-    if not aba_op:
-        st.error("Aba 'OP' não encontrada no Excel.")
-        st.stop()
+    # Detecta colunas automaticamente
+    col_cadastro = next((c for c in df.columns if "cadastro" in c.lower()), None)
+    col_entrega = next((c for c in df.columns if "entrega" in c.lower()), None)
+    col_termino = next((c for c in df.columns if "termino" in c.lower() or "término" in c.lower()), None)
+    col_inicio = next((c for c in df.columns if "inicio" in c.lower()), None)
 
-    df_op = pd.read_excel(arquivo, sheet_name=aba_op[0])
-    df_op.columns = df_op.columns.str.strip()
+    # Converte datas
+    for c in [col_cadastro, col_entrega, col_termino, col_inicio]:
+        if c:
+            df[c] = pd.to_datetime(df[c], errors="coerce")
 
-    # Localiza aba OPR (qualquer nome contendo OPR)
-    aba_opr = [a for a in abas if "OPR" in a.upper()]
-    if aba_opr:
-        df_opr = pd.read_excel(arquivo, sheet_name=aba_opr[0])
-        df_opr.columns = df_opr.columns.str.strip()
-    else:
-        df_opr = pd.DataFrame()
-
-    # ======================================================
-    # IDENTIFICAÇÃO AUTOMÁTICA DE COLUNAS IMPORTANTES
-    # ======================================================
-
-    col_cadastro = None
-    col_entrega = None
-    col_termino = None
-    col_inicio = None
-
-    for col in df_op.columns:
-        col_lower = col.lower()
-
-        if "cadastro" in col_lower:
-            col_cadastro = col
-
-        if "entrega" in col_lower:
-            col_entrega = col
-
-        if "término" in col_lower or "termino" in col_lower:
-            col_termino = col
-
-        if "início" in col_lower or "inicio" in col_lower:
-            col_inicio = col
-
-    if not col_cadastro:
-        st.error("Coluna de Data de Cadastro não encontrada.")
-        st.stop()
-
-    # Converter datas encontradas
-    for col in [col_cadastro, col_entrega, col_termino, col_inicio]:
-        if col:
-            df_op[col] = pd.to_datetime(df_op[col], errors="coerce")
-
-    # ======================================================
-    # CÁLCULO DIAS ÚTEIS (SOMENTE SE ENTREGAR E TERMINO EXISTIREM)
-    # ======================================================
-
+    # Dias úteis
     def dias_uteis(inicio, fim):
         if pd.isna(inicio) or pd.isna(fim):
             return np.nan
         return np.busday_count(inicio.date(), fim.date())
 
     if col_entrega and col_termino:
-        df_op["Dias_Uteis"] = df_op.apply(
+        df["Dias_Uteis"] = df.apply(
             lambda row: dias_uteis(row[col_entrega], row[col_termino]),
             axis=1
         )
     else:
-        df_op["Dias_Uteis"] = np.nan
+        df["Dias_Uteis"] = np.nan
+
+    # KPIs
+    mes_atual = datetime.now().month
+    ano_atual = datetime.now().year
+
+    op_mes = df[
+        (df[col_cadastro].dt.month == mes_atual) &
+        (df[col_cadastro].dt.year == ano_atual)
+    ]
+
+    tempo_medio = df["Dias_Uteis"].mean()
+
+    demanda = df[
+        (df[col_inicio].isna()) |
+        (df[col_termino].isna())
+    ] if col_inicio and col_termino else pd.DataFrame()
 
     # ======================================================
-    # DASHBOARD OP
+    # CARDS SUPERIORES
     # ======================================================
 
-    if menu == "Dashboard OP":
+    c1, c2, c3, c4 = st.columns(4)
 
-        st.markdown('<div class="section-title">Produção</div>', unsafe_allow_html=True)
+    c1.markdown(f"""
+    <div class="card-top">
+        <div>OP's Geradas (Mês atual)</div>
+        <div class="big-number">{len(op_mes)}</div>
+    </div>
+    """, unsafe_allow_html=True)
 
-        mes_atual = datetime.now().month
-        ano_atual = datetime.now().year
+    c2.markdown(f"""
+    <div class="card-top">
+        <div>Tempo Médio (d.u.)</div>
+        <div class="big-number">{round(tempo_medio,1) if not np.isnan(tempo_medio) else "-"}</div>
+    </div>
+    """, unsafe_allow_html=True)
 
-        op_mes = df_op[
-            (df_op[col_cadastro].dt.month == mes_atual) &
-            (df_op[col_cadastro].dt.year == ano_atual)
-        ]
+    c3.markdown(f"""
+    <div class="card-top">
+        <div>Demanda Atual</div>
+        <div class="big-number">{len(demanda)}</div>
+    </div>
+    """, unsafe_allow_html=True)
 
-        tempo_medio = df_op["Dias_Uteis"].mean()
+    c4.markdown(f"""
+    <div class="card-top">
+        <div>Indicador Geral</div>
+        <div class="big-number">OK</div>
+    </div>
+    """, unsafe_allow_html=True)
 
-        if col_inicio and col_termino:
-            demanda = df_op[
-                (df_op[col_inicio].isna()) |
-                (df_op[col_termino].isna())
-            ]
-        else:
-            demanda = pd.DataFrame()
+    st.markdown("<br>", unsafe_allow_html=True)
 
-        col1, col2, col3 = st.columns(3)
+    # ======================================================
+    # LAYOUT PRINCIPAL (LATERAL + GRÁFICO)
+    # ======================================================
 
-        col1.markdown(f"""
-        <div class="card">
-            <div class="metric-title">OP's no Mês</div>
-            <div class="metric-value">{len(op_mes)}</div>
+    col_left, col_right = st.columns([1,3])
+
+    with col_left:
+
+        st.markdown(f"""
+        <div class="card-side">
+            <div class="side-title">Tempo médio de Liberação / OP</div>
+            <div class="big-number">{round(tempo_medio,1) if not np.isnan(tempo_medio) else "-"}</div>
         </div>
         """, unsafe_allow_html=True)
 
-        col2.markdown(f"""
-        <div class="card">
-            <div class="metric-title">Tempo Médio (d.u.)</div>
-            <div class="metric-value">{round(tempo_medio,1) if not np.isnan(tempo_medio) else "-"}</div>
+        st.markdown(f"""
+        <div class="card-side">
+            <div class="side-title">Quantidade aguardando</div>
+            <div class="big-number">{len(demanda)}</div>
         </div>
         """, unsafe_allow_html=True)
 
-        col3.markdown(f"""
-        <div class="card">
-            <div class="metric-title">Demanda Atual</div>
-            <div class="metric-value">{len(demanda)}</div>
+        st.markdown(f"""
+        <div class="card-side">
+            <div class="side-title">Recados</div>
+            Auditoria do cliente nos dias 24 e 25.
         </div>
         """, unsafe_allow_html=True)
 
-        st.markdown("---")
+    with col_right:
 
-        df_op["AnoMes"] = df_op[col_cadastro].dt.to_period("M")
-        mensal = df_op.groupby("AnoMes").size()
-
+        df["AnoMes"] = df[col_cadastro].dt.to_period("M")
+        mensal = df.groupby("AnoMes").size()
         media = mensal.mean()
 
         fig = go.Figure()
+
         fig.add_bar(
             x=mensal.index.astype(str),
             y=mensal.values,
-            marker_color="lightgray"
+            marker_color="#bcbcbc"
         )
 
         fig.add_hline(
@@ -202,75 +233,14 @@ if arquivo is not None:
         )
 
         fig.update_layout(
-            title="OP's Criadas por Mês",
+            margin=dict(l=10,r=10,t=10,b=10),
             plot_bgcolor="white",
             paper_bgcolor="white"
         )
 
+        st.markdown('<div class="chart-container">', unsafe_allow_html=True)
         st.plotly_chart(fig, use_container_width=True)
-
-    # ======================================================
-    # DASHBOARD OPR
-    # ======================================================
-
-    if menu == "Dashboard OPR":
-
-        st.markdown('<div class="section-title">Retrabalho</div>', unsafe_allow_html=True)
-
-        if df_opr.empty:
-            st.warning("Aba OPR não encontrada ou vazia.")
-        else:
-
-            # Identificar coluna data
-            col_data_opr = None
-            col_motivo = None
-
-            for col in df_opr.columns:
-                col_lower = col.lower()
-                if "data" in col_lower:
-                    col_data_opr = col
-                if "motivo" in col_lower:
-                    col_motivo = col
-
-            if col_data_opr:
-                df_opr[col_data_opr] = pd.to_datetime(df_opr[col_data_opr], errors="coerce")
-                df_opr["AnoMes"] = df_opr[col_data_opr].dt.to_period("M")
-                mensal_opr = df_opr.groupby("AnoMes").size()
-            else:
-                mensal_opr = pd.Series()
-
-            col1, col2 = st.columns(2)
-
-            if not mensal_opr.empty:
-                fig1 = go.Figure()
-                fig1.add_bar(
-                    x=mensal_opr.index.astype(str),
-                    y=mensal_opr.values,
-                    marker_color="#d9534f"
-                )
-                fig1.update_layout(
-                    title="OPR por Mês",
-                    plot_bgcolor="white",
-                    paper_bgcolor="white"
-                )
-                col1.plotly_chart(fig1, use_container_width=True)
-
-            if col_motivo:
-                motivos = df_opr[col_motivo].value_counts()
-
-                fig2 = go.Figure()
-                fig2.add_bar(
-                    x=motivos.values,
-                    y=motivos.index,
-                    orientation="h",
-                    marker_color="#c9302c"
-                )
-                fig2.update_layout(
-                    title="Motivos de Retrabalho",
-                    plot_bgcolor="white",
-                    paper_bgcolor="white"
-                )
-                col2.plotly_chart(fig2, use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
 else:
-    st.info("Carregue a base Excel (.xlsx) para visualizar o dashboard.")
+    st.info("Carregue a base Excel para visualizar o dashboard.")

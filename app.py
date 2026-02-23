@@ -282,21 +282,9 @@ else:
         st.markdown('<div class="chart-container">', unsafe_allow_html=True)
         st.plotly_chart(fig, use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
-
-if col_entrega and col_termino:
-    def dias_uteis(entrega, termino):
-        if pd.isna(entrega) or pd.isna(termino):
-            return np.nan
-        if termino < entrega:
-            return np.nan
-        return np.busday_count(entrega.date(), termino.date())
-
-    df["Dias_Uteis"] = df.apply(
-        lambda row: dias_uteis(row[col_entrega], row[col_termino]),
-        axis=1
-    )
-else:
+    else:
     df["Dias_Uteis"] = np.nan)
+
 
 
 

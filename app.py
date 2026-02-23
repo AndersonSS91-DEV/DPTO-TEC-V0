@@ -222,7 +222,10 @@ if arquivo:
 
     with col_right:
 
-        if col_cadastro:
+       # =============================
+# GRÁFICO MENSAL (NOV/25 → MÊS ATUAL)
+# =============================
+if col_cadastro:
 
     inicio_grafico = pd.Timestamp("2025-11-01")
     fim_grafico = pd.Timestamp(hoje.year, hoje.month, 1) + pd.offsets.MonthEnd(0)
@@ -277,5 +280,6 @@ if arquivo:
     
 else:
     st.info("Carregue a base Excel (.xlsx) para visualizar o dashboard.")
+
 
 

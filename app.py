@@ -64,23 +64,45 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==========================================================
-# HEADER COM LOGO (VERSÃO LIMPA)
+# HEADER EXECUTIVO MBF
 # ==========================================================
 
-logo = Image.open("logo_mbf.png")
+st.markdown("""
+<style>
+.header-bar {
+    background: linear-gradient(90deg, #d9e3e8 0%, #e6edf1 100%);
+    padding: 18px 25px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+    display: flex;
+    align-items: center;
+}
 
-col_logo, col_title = st.columns([1,8])
+.header-title {
+    font-size: 28px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0;
+}
 
-with col_logo:
-    st.image(logo, width=80)
+.logo-box {
+    margin-right: 20px;
+}
+</style>
+""", unsafe_allow_html=True)
 
-with col_title:
-    st.markdown(
-        "<h2 style='margin-top:20px;'>Dashboard - OP´s - Departamento Técnico MBF</h2>",
-        unsafe_allow_html=True
-    )
-
-st.markdown("<br>", unsafe_allow_html=True)
+st.markdown("""
+<div class="header-bar">
+    <div class="logo-box">
+        <img src="LOGO MBF.png" width="95">
+    </div>
+    <div>
+        <h2 class="header-title">
+            Dashboard - OP´s - Departamento Técnico MBF
+        </h2>
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
 # ==========================================================
 # UPLOAD
@@ -255,3 +277,4 @@ if arquivo:
 
 else:
     st.info("Carregue a base Excel (.xlsx) para visualizar o dashboard.")
+

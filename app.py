@@ -7,6 +7,7 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 from datetime import datetime
+from PIL import Image
 
 st.set_page_config(layout="wide")
 
@@ -22,14 +23,6 @@ st.markdown("""
     padding-top: 1rem;
     padding-left: 2rem;
     padding-right: 2rem;
-}
-
-/* HEADER */
-.header-mbf {
-    background-color: #dce6ea;
-    padding: 18px;
-    border-radius: 6px;
-    margin-bottom: 25px;
 }
 
 /* CARD EXECUTIVO */
@@ -71,10 +64,8 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==========================================================
-# HEADER COM LOGO
+# HEADER COM LOGO (VERSÃO LIMPA)
 # ==========================================================
-
-from PIL import Image
 
 logo = Image.open("logo_mbf.png")
 
@@ -85,19 +76,15 @@ with col_logo:
 
 with col_title:
     st.markdown(
-        "<h2 style='margin-top:15px;'>Dashboard - OP´s - Departamento Técnico MBF</h2>",
+        "<h2 style='margin-top:20px;'>Dashboard - OP´s - Departamento Técnico MBF</h2>",
         unsafe_allow_html=True
-    ))
+    )
 
-st.markdown(f"""
-<div class="header-mbf" style="display:flex; align-items:center; gap:18px;">
-    <img src="data:image/png;base64,{logo_base64}" width="70">
-    <h2 style="margin:0;">Dashboard Operações - OPS</h2>
-</div>
-""", unsafe_allow_html=True)
-    <h2>Dashboard - OP´s - Departamento Técnico MBF</h2>
-</div>
-""", unsafe_allow_html=True)
+st.markdown("<br>", unsafe_allow_html=True)
+
+# ==========================================================
+# UPLOAD
+# ==========================================================
 
 arquivo = st.file_uploader("Carregar base Excel (.xlsx)", type=["xlsx"])
 
@@ -118,9 +105,9 @@ if arquivo:
 
     hoje = datetime.now()
 
-    # =============================
+    # ======================================================
     # DIAS ÚTEIS (ENTREGA → TERMINO)
-    # =============================
+    # ======================================================
 
     def dias_uteis(entrega, termino):
         if pd.isna(entrega) or pd.isna(termino):
@@ -142,9 +129,9 @@ if arquivo:
 
     df_validos = df[(df["Dias_Uteis"].notna()) & (df["Dias_Uteis"] <= 60)]
 
-    # =============================
+    # ======================================================
     # KPIs
-    # =============================
+    # ======================================================
 
     mes_atual = hoje.month
     ano_atual = hoje.year
@@ -175,9 +162,9 @@ if arquivo:
         bento_mes = pd.DataFrame()
         rodner_mes = pd.DataFrame()
 
-    # =============================
+    # ======================================================
     # CARDS SUPERIORES
-    # =============================
+    # ======================================================
 
     c1, c2, c3, c4 = st.columns(4)
 
@@ -196,9 +183,9 @@ if arquivo:
     c3.markdown(card("Rodner - OP's (Mês atual)", len(rodner_mes)), unsafe_allow_html=True)
     c4.markdown(card("Demanda Atual", len(demanda)), unsafe_allow_html=True)
 
-    # =============================
+    # ======================================================
     # LAYOUT PRINCIPAL
-    # =============================
+    # ======================================================
 
     col_left, col_right = st.columns([1,3])
 
@@ -268,10 +255,3 @@ if arquivo:
 
 else:
     st.info("Carregue a base Excel (.xlsx) para visualizar o dashboard.")
-
-
-
-
-
-
-

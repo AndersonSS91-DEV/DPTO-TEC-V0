@@ -142,6 +142,7 @@ if arquivo:
     # ======================================================
 
     with tab_dashboard:
+        st.markdown("### 📊 DASHBOARD")
 
         # ------------------------------
         # DETECÇÃO DE COLUNAS
@@ -335,3 +336,4 @@ if arquivo:
 
 else:
     st.info("Carregue a base Excel (.xlsx) para visualizar o dashboard.")
+

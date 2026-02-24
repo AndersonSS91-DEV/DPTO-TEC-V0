@@ -220,9 +220,17 @@ if arquivo:
         col_left, col_right = st.columns([1,3])
 
         with col_left:
-            st.markdown(card("Tempo médio de Liberação / OP (Dias)",
-                             round(tempo_medio,2) if not np.isnan(tempo_medio) else "-"),
-                        unsafe_allow_html=True)
+    # CARD 1 - TEMPO MÉDIO
+    st.markdown(card(
+        "Tempo médio de Liberação / OP (Dias)",
+        round(tempo_medio,2) if not np.isnan(tempo_medio) else "-"
+    ), unsafe_allow_html=True)
+
+    # CARD 2 - OP's AGUARDANDO INFORMAÇÃO
+    st.markdown(card(
+        "Quantidade de OP´s Aguardando Docs e/ou Informações",
+        len(demanda)
+    ), unsafe_allow_html=True)
 
         with col_right:
             if col_cadastro:
@@ -318,3 +326,4 @@ if arquivo:
 
 else:
     st.info("Carregue a base Excel (.xlsx) para visualizar o dashboard.")
+

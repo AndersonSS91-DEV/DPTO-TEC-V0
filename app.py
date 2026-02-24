@@ -325,18 +325,12 @@ with tab_opr:
         st.warning("Aba OP R não encontrada no arquivo.")
     else:
 
-        # -----------------------------
         # TABELA BASE
-        # -----------------------------
-
         st.dataframe(df_opr, use_container_width=True)
 
         st.markdown("---")
 
-        # -----------------------------
         # DETECTAR COLUNA MOTIVO
-        # -----------------------------
-
         col_motivo = next(
             (c for c in df_opr.columns if "motivo" in c.lower()),
             None
@@ -351,10 +345,6 @@ with tab_opr:
                 .sort_values(ascending=True)
             )
 
-            # -----------------------------
-            # GRÁFICO HORIZONTAL EXECUTIVO
-            # -----------------------------
-
             fig = go.Figure()
 
             fig.add_trace(go.Bar(
@@ -365,7 +355,7 @@ with tab_opr:
             ))
 
             fig.update_layout(
-                height=60 * len(resumo) + 120,  # altura dinâmica
+                height=60 * len(resumo) + 120,
                 margin=dict(l=200, r=40, t=40, b=40),
                 plot_bgcolor="white",
                 paper_bgcolor="white",
@@ -379,16 +369,18 @@ with tab_opr:
         else:
             st.warning("Coluna 'Motivo' não encontrada na aba OP R.")
 
-    # ======================================================
-    # TAB RECADOS
-    # ======================================================
 
-    with tab_recados:
-        st.markdown("### 📢 Painel de Recados")
-        st.info("Área destinada a comunicados internos.")
+# ======================================================
+# TAB RECADOS
+# ======================================================
+
+with tab_recados:
+    st.markdown("### 📢 Painel de Recados")
+    st.info("Área destinada a comunicados internos.")
         
         else:
     st.info("Carregue a base Excel (.xlsx) para visualizar o dashboard.")
+
 
 
 

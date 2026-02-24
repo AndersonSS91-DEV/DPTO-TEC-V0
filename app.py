@@ -313,18 +313,71 @@ if arquivo:
         st.markdown("### ⚠️ Painel de Pendências")
         st.info("Em desenvolvimento.")
 
-    # ======================================================
-    # TAB OP R
-    # ======================================================
+# ======================================================
+# TAB OP R
+# ======================================================
 
-    with tab_opr:
-        st.markdown("### 🔁 Painel de OP´s R")
+with tab_opr:
 
-        if df_opr.empty:
-            st.warning("Aba OP R não encontrada no arquivo.")
+    st.markdown("## 🔁 Painel de OP´s R")
+
+    if df_opr.empty:
+        st.warning("Aba OP R não encontrada no arquivo.")
+    else:
+
+        # -----------------------------
+        # TABELA BASE
+        # -----------------------------
+
+        st.dataframe(df_opr, use_container_width=True)
+
+        st.markdown("---")
+
+        # -----------------------------
+        # DETECTAR COLUNA MOTIVO
+        # -----------------------------
+
+        col_motivo = next(
+            (c for c in df_opr.columns if "motivo" in c.lower()),
+            None
+        )
+
+        if col_motivo:
+
+            resumo = (
+                df_opr[col_motivo]
+                .fillna("Não informado")
+                .value_counts()
+                .sort_values(ascending=True)
+            )
+
+            # -----------------------------
+            # GRÁFICO HORIZONTAL EXECUTIVO
+            # -----------------------------
+
+            fig = go.Figure()
+
+            fig.add_trace(go.Bar(
+                y=resumo.index,
+                x=resumo.values,
+                orientation="h",
+                marker_color="#1f2430"
+            ))
+
+            fig.update_layout(
+                height=60 * len(resumo) + 120,  # altura dinâmica
+                margin=dict(l=200, r=40, t=40, b=40),
+                plot_bgcolor="white",
+                paper_bgcolor="white",
+                title="Quantidade de OP´s R por Motivo",
+                xaxis_title="Quantidade",
+                yaxis_title=""
+            )
+
+            st.plotly_chart(fig, use_container_width=True)
+
         else:
-            st.write("Total de OP´s R:", len(df_opr))
-            st.dataframe(df_opr)
+            st.warning("Coluna 'Motivo' não encontrada na aba OP R.")
 
     # ======================================================
     # TAB RECADOS
@@ -336,4 +389,5 @@ if arquivo:
 
 else:
     st.info("Carregue a base Excel (.xlsx) para visualizar o dashboard.")
+
 

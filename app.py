@@ -201,9 +201,9 @@ if arquivo:
         """
 
     c1.markdown(card("(Mês atual) OP's Geradas", len(op_mes)), unsafe_allow_html=True)
-    c2.markdown(card("Bento - OP's (Mês atual)", len(bento_mes)), unsafe_allow_html=True)
-    c3.markdown(card("Rodner - OP's (Mês atual)", len(rodner_mes)), unsafe_allow_html=True)
-    c4.markdown(card("Demanda Atual", len(demanda)), unsafe_allow_html=True)
+    c2.markdown(card("Bento - OP's Geradas (Mês atual)", len(bento_mes)), unsafe_allow_html=True)
+    c3.markdown(card("Rodner - OP's Geradas (Mês atual)", len(rodner_mes)), unsafe_allow_html=True)
+    c4.markdown(card("Demanda Atual (OP´s Não Geradas)", len(demanda)), unsafe_allow_html=True)
 
     # ======================================================
     # LAYOUT PRINCIPAL
@@ -217,9 +217,12 @@ if arquivo:
                          round(tempo_medio,2) if not np.isnan(tempo_medio) else "-"),
                     unsafe_allow_html=True)
 
-        st.markdown(card("Quantidade aguardando informações", len(demanda)),
+        st.markdown(card("Quantidade de OP´s com Informações Pendentes", len(demanda)),
                     unsafe_allow_html=True)
 
+        ==================================
+        #CARD PARA RECADOS DO DEPARTAMENTO
+        ==================================
         st.markdown(card("Recados",
                          "Auditoria cliente dias 24 e 25."),
                     unsafe_allow_html=True)
@@ -277,4 +280,5 @@ if arquivo:
 
 else:
     st.info("Carregue a base Excel (.xlsx) para visualizar o dashboard.")
+
 

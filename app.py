@@ -220,9 +220,7 @@ if arquivo:
         st.markdown(card("Quantidade de OP´s com Informações Pendentes", len(demanda)),
                     unsafe_allow_html=True)
 
-        ==================================
-        #CARD PARA RECADOS DO DEPARTAMENTO
-        ==================================
+
         st.markdown(card("Recados",
                          "Auditoria cliente dias 24 e 25."),
                     unsafe_allow_html=True)
@@ -280,5 +278,6 @@ if arquivo:
 
 else:
     st.info("Carregue a base Excel (.xlsx) para visualizar o dashboard.")
+
 
 

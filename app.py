@@ -386,8 +386,9 @@ with tab_opr:
     with tab_recados:
         st.markdown("### 📢 Painel de Recados")
         st.info("Área destinada a comunicados internos.")
-
-else:
+        
+        else:
     st.info("Carregue a base Excel (.xlsx) para visualizar o dashboard.")
+
 
 

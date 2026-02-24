@@ -217,7 +217,7 @@ if arquivo:
                          round(tempo_medio,2) if not np.isnan(tempo_medio) else "-"),
                     unsafe_allow_html=True)
 
-        st.markdown(card("Quantidade de OP´s Aguardando Documentos e/ou Informações Adicionais", len(demanda)),
+        st.markdown(card("Quantidade de OP´s Aguardando Documentos e/ou Informações Adicionais (PIT, MPS, Confirmações do Cliente)", len(demanda)),
                     unsafe_allow_html=True)
 
 
@@ -278,6 +278,7 @@ if arquivo:
 
 else:
     st.info("Carregue a base Excel (.xlsx) para visualizar o dashboard.")
+
 
 
 
